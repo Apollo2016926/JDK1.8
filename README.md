@@ -5,9 +5,9 @@
 
 ### 二、java.util
 
-- ArrayList
+- [ArrayList](https://github.com/Apollo2016926/JDK1.8/blob/master/java/util/ArrayList.md )
 
-- HashMap
+- [HashMap](https://github.com/Apollo2016926/JDK1.8/blob/master/java/util/HashMap.md)
 
   
 
