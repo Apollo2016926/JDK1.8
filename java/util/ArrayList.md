@@ -1,4 +1,4 @@
-# <Center>ArrayList源码分析</Center>
+# <center>ArrayList源码分析</center>
 
 - 以下分析基于JDK1.8
 
