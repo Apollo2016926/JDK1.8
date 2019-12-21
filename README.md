@@ -10,6 +10,8 @@
   + atomic
 
     + [AtomicInteger](./java/util/concurrent/atomic/AtomicInteger.md)
+    + [AtomicStampedReference](./java/util/concurrent/atomic/AtomicStampedReference.md)
+    + [LongAdder](./java/util/concurrent/atomic/LongAdder.md)
 
     
 
