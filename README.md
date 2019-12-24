@@ -25,5 +25,10 @@
 
 - [Unsafe](./sun/misc/Unsafe.md)
 
+### 四、theory
+
++ [java内存模型](./theory/java内存模型.md)
++ [volatile](./theory/volatile.md)
+
 
 
