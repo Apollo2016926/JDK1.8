@@ -30,6 +30,7 @@
 + [java内存模型](./theory/java内存模型.md)
 + [volatile](./theory/volatile.md)
 + [synchronized](./theory/synchronized.md)
++ [分布式锁](./theory/分布式锁.md)
 
 
 
