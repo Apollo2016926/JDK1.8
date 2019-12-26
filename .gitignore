@@ -33,3 +33,5 @@ sh.exe.stackdump
 # console static
 saturn-console/src/main/resources/static
 out/
+classes/
+.gitignore
