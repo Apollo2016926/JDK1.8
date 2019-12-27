@@ -18,6 +18,7 @@
     + [AbstractQueuedSynchronizer](./source/java/util/concurrent/locks/AbstractQueuedSynchronizer.md)
     + [ReentrantLock](./source/java/util/concurrent/locks/ReentrantLock.md)
     + [Semaphore](./source/java/util/concurrent/locks/Semaphore.md)
+    + [ReentrantReadWriteLock](./source/java/util/concurrent/locks/ReentrantReadWriteLock.md)
 
 
 
