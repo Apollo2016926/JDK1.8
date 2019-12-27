@@ -407,3 +407,140 @@ private void unparkSuccessor(Node node) {//node头节点
 （1）将state的值减1；
 
 （2）如果state减到了0，说明已经完全释放锁了，唤醒下一个等待着的节点；
+
+##### newCondition
+
+```java
+public Condition newCondition() {//reentrantLock
+    return sync.newCondition();
+}
+ final ConditionObject newCondition() {//sync
+            return new ConditionObject();
+        }
+ public ConditionObject() { }//aqs
+```
+
+##### await
+
+```java
+//AbstractQueuedSynchronizer.ConditionObject#await()
+public final void await() throws InterruptedException {
+    if (Thread.interrupted())
+        //线程中断抛出
+        throw new InterruptedException();
+    //添加节点到Condition队列并返回该节点
+    Node node = addConditionWaiter();
+    //完全释放当前线程获取的锁
+    int savedState = fullyRelease(node);
+    int interruptMode = 0;
+    //是否在同步队列中
+    while (!isOnSyncQueue(node)) {
+        LockSupport.park(this);
+        if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
+            break;
+    }
+    if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
+        interruptMode = REINTERRUPT;
+    if (node.nextWaiter != null) // clean up if cancelled
+        unlinkCancelledWaiters();
+    if (interruptMode != 0)
+        reportInterruptAfterWait(interruptMode);
+}
+
+//AbstractQueuedSynchronizer.ConditionObject#addConditionWaiter
+ private Node addConditionWaiter() {
+            Node t = lastWaiter;
+            
+            if (t != null && t.waitStatus != Node.CONDITION) {
+               // 清除条件等待队列上节点状态不为 CONDITION 的节点
+                unlinkCancelledWaiters();
+                //清除之后重新获取尾节点
+                t = lastWaiter;
+            } 
+			// 新建一个节点，它的等待状态是CONDITION
+            Node node = new Node(Thread.currentThread(), Node.CONDITION);
+      
+
+     if (t == null)
+            // 如果尾节点为空，则把新节点赋值给头节点（相当于初始化队列）
+                firstWaiter = node;
+            else
+                // 否则把新节点赋值给尾节点的nextWaiter指针
+                t.nextWaiter = node;
+            lastWaiter = node;//尾节点指向新节点
+            return node;
+        }
+
+//AbstractQueuedSynchronizer.fullyRelease
+ final int fullyRelease(Node node) {
+        boolean failed = true;
+        try {
+            int savedState = getState();
+            if (release(savedState)) {
+                // 一次性释放所有获得的锁
+                failed = false;
+                return savedState;//返回获取锁的次数
+            } else {
+                throw new IllegalMonitorStateException();
+            }
+        } finally {
+            if (failed)
+                node.waitStatus = Node.CANCELLED;
+        }
+    }
+
+
+final boolean isOnSyncQueue(Node node) {
+        if (node.waitStatus == Node.CONDITION || node.prev == null)       
+// 如果等待状态是CONDITION，或者前一个指针为空，返回false 
+// 说明还没有移到AQS的队列中
+            return false;
+        if (node.next != null) // If has successor, it must be on queue
+            //如果next指针有值，说明已经移到AQS的队列中了
+            return true;
+       //从AQS的尾节点开始往前寻找看是否可以找到当前节点，找到了也说明已经在AQS的队列中了
+        return findNodeFromTail(node);
+    }
+```
+
+##### signal
+
+```java
+public final void signal() {
+    // 如果不是当前线程占有着锁，调用这个方法抛出异常
+// 说明signal()也要在获取锁之后执行
+    if (!isHeldExclusively())
+        throw new IllegalMonitorStateException();
+    Node first = firstWaiter;
+    if (first != null)
+      //  如果有等待条件的节点，则通知它条件已成立
+        doSignal(first);
+    
+       private void doSignal(Node first) {
+            do {
+                //移到条件队列的头节点往后一位
+                if ( (firstWaiter = first.nextWaiter) == null)
+                    lastWaiter = null;
+// 相当于把头节点从队列中出队
+                first.nextWaiter = null;
+                // 转移节点到AQS队列中
+            } while (!transferForSignal(first) &&
+                     (first = firstWaiter) != null);
+        }
+    
+    final boolean transferForSignal(Node node) {
+        //把节点的状态更改为0，也就是说即将移到AQS队列中,如果失败了，说明节点已经被改成取消状态了 返回false，通过上面的循环可知会寻找下一个可用节点
+        if (!compareAndSetWaitStatus(node, Node.CONDITION, 0))
+            return false;
+
+       //调用AQS的入队方法把节点移到AQS的队列中
+        //注意，这里enq()的返回值是node的上一个节点，也就是旧尾节点
+        Node p = enq(node);
+        int ws = p.waitStatus;
+        //如果上一个节点已取消了，或者更新状态为SIGNAL失败（也是说明上一个节点已经取消了）
+// 则直接唤醒当前节点对应的线程
+        if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
+            LockSupport.unpark(node.thread);
+        return true;
+    }
+```
