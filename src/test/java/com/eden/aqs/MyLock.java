@@ -125,6 +125,7 @@ public class MyLock {
         // 把state更新成0，这里不需要原子更新，因为同时只有一个线程访问到这里
         state = 0;
         // 下一个待唤醒的节点
+        Thread.sleep(1);
         Node next = head.next;
         // 下一个节点不为空，就唤醒它
         if (next != null) {
