@@ -36,6 +36,12 @@
 
 - [LinkedHashMap](./source/java/util/LinkedHashMap.md)
 
+- [WeakHashMap](./source/java/util/WeakHashMap.md)
+
+  
+
+  
+
   
 
 ### 三、sun.misc
