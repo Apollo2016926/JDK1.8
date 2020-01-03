@@ -1,4 +1,4 @@
-package com.eden.aqs.arrays;
+package com.eden.arrays;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
