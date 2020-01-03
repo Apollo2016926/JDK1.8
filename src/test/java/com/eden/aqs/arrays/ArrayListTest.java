@@ -1,6 +1,7 @@
 package com.eden.aqs.arrays;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public class ArrayListTest {
         System.out.println(list.size());
         System.out.println(list);
 
-
+        LinkedHashMap s=new LinkedHashMap();
+        s.put("s",null);
     }
 }
