@@ -263,3 +263,116 @@ private void rotateRight(Entry<K,V> p) {
     }
 }
 ```
+### put(K key, V value)
+
+```java
+public V put(K key, V value) {
+    Entry<K,V> t = root;
+    if (t == null) {//判断根节点
+        //检查是否为空
+        compare(key, key); // type (and possibly null) check
+//插入根节点
+        root = new Entry<>(key, value, null);
+        size = 1;
+        modCount++;
+        return null;
+    }
+    int cmp;//存储key的比较结果
+    Entry<K,V> parent;
+    // split comparator and comparable paths
+    Comparator<? super K> cpr = comparator;
+    if (cpr != null) {
+        //比较器不为空
+        do {
+            parent = t;//从根节点开始遍历
+            cmp = cpr.compare(key, t.key);
+            if (cmp < 0)
+                //传入的key比父节点小从左子树查
+                t = t.left;
+            else if (cmp > 0)
+ //传入的key比父节点大从右子树查
+                t = t.right;
+            else
+                //找到了就将值设置
+                return t.setValue(value);
+        } while (t != null);
+    }
+    else {
+        //比较器为空 key为空则抛出异常
+        if (key == null)
+            throw new NullPointerException();
+        @SuppressWarnings("unchecked")
+        //将key强转为比较器
+            Comparable<? super K> k = (Comparable<? super K>) key;
+        do {
+            //从根节点开始遍历
+            parent = t;
+            cmp = k.compareTo(t.key);
+            if (cmp < 0)
+                t = t.left;
+            else if (cmp > 0)
+                t = t.right;
+            else
+                return t.setValue(value);
+        } while (t != null);
+    }
+    // 如果没找到，那么新建一个节点，并插入到树中
+    Entry<K,V> e = new Entry<>(key, value, parent);
+    if (cmp < 0)
+        //小于插入到左子节点
+        parent.left = e;
+    else
+        //大于插入到右子节点
+        parent.right = e;
+    //平衡
+    fixAfterInsertion(e);
+    size++;
+    modCount++;
+    return null;
+}
+```
+
+### fixAfterInsertion(Entry<K,V> x) 
+
+```
+private void fixAfterInsertion(Entry<K,V> x) {
+    x.color = RED;
+
+    while (x != null && x != root && x.parent.color == RED) {
+        if (parentOf(x) == leftOf(parentOf(parentOf(x)))) {
+            Entry<K,V> y = rightOf(parentOf(parentOf(x)));
+            if (colorOf(y) == RED) {
+                setColor(parentOf(x), BLACK);
+                setColor(y, BLACK);
+                setColor(parentOf(parentOf(x)), RED);
+                x = parentOf(parentOf(x));
+            } else {
+                if (x == rightOf(parentOf(x))) {
+                    x = parentOf(x);
+                    rotateLeft(x);
+                }
+                setColor(parentOf(x), BLACK);
+                setColor(parentOf(parentOf(x)), RED);
+                rotateRight(parentOf(parentOf(x)));
+            }
+        } else {
+            Entry<K,V> y = leftOf(parentOf(parentOf(x)));
+            if (colorOf(y) == RED) {
+                setColor(parentOf(x), BLACK);
+                setColor(y, BLACK);
+                setColor(parentOf(parentOf(x)), RED);
+                x = parentOf(parentOf(x));
+            } else {
+                if (x == leftOf(parentOf(x))) {
+                    x = parentOf(x);
+                    rotateRight(x);
+                }
+                setColor(parentOf(x), BLACK);
+                setColor(parentOf(parentOf(x)), RED);
+                rotateLeft(parentOf(parentOf(x)));
+            }
+        }
+    }
+    root.color = BLACK;
+}
+```
