@@ -334,45 +334,185 @@ public V put(K key, V value) {
 
 ### fixAfterInsertion(Entry<K,V> x) 
 
-```
-private void fixAfterInsertion(Entry<K,V> x) {
-    x.color = RED;
+插入再平衡
 
+插入的元素默认都是红色，因为插入红色元素只违背了第4条特性，那么我们只要根据这个特性来平衡就容易多了。
+
+根据不同的情况有以下几种处理方式：
+
+1. 插入的元素如果是根节点，则直接涂成黑色即可，不用平衡；
+2. 插入的元素的父节点如果为黑色，不需要平衡；
+3. 插入的元素的父节点如果为红色，则违背了特性4，需要平衡，平衡时又分成下面三种情况：
+
+**（如果父节点是祖父节点的左节点）**
+
+| 情况                                                         | 策略                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1）父节点为红色，叔叔节点也为红色                            | （1）将父节点设为黑色； （2）将叔叔节点设为黑色； （3）将祖父节点设为红色； （4）将祖父节点设为新的当前节点，进入下一次循环判断； |
+| 2）父节点为红色，叔叔节点为黑色，且当前节点是其父节点的右节点 | （1）将父节点作为新的当前节点； （2）以新当节点为支点进行左旋，进入情况3）； |
+| 3）父节点为红色，叔叔节点为黑色，且当前节点是其父节点的左节点 | （1）将父节点设为黑色； （2）将祖父节点设为红色； （3）以祖父节点为支点进行右旋，进入下一次循环判断； |
+
+**（如果父节点是祖父节点的右节点，则正好与上面反过来）**
+
+| 情况                                                         | 策略                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1）父节点为红色，叔叔节点也为红色                            | （1）将父节点设为黑色； （2）将叔叔节点设为黑色； （3）将祖父节点设为红色； （4）将祖父节点设为新的当前节点，进入下一次循环判断； |
+| 2）父节点为红色，叔叔节点为黑色，且当前节点是其父节点的左节点 | （1）将父节点作为新的当前节点； （2）以新当节点为支点进行右旋； |
+| 3）父节点为红色，叔叔节点为黑色，且当前节点是其父节点的右节点 | （1）将父节点设为黑色； （2）将祖父节点设为红色； （3）以祖父节点为支点进行左旋，进入下一次循环判断； |
+
+```java
+/**
+ * 插入再平衡
+ *（1）每个节点或者是黑色，或者是红色。
+ *（2）根节点是黑色。
+ *（3）每个叶子节点（NIL）是黑色。（注意：这里叶子节点，是指为空(NIL或NULL)的叶子节点！）
+ *（4）如果一个节点是红色的，则它的子节点必须是黑色的。
+ *（5）从一个节点到该节点的子孙节点的所有路径上包含相同数目的黑节点
+ */
+private void fixAfterInsertion(Entry<K,V> x) {
+    x.color = RED;//插入的节点设置为 红色
+//只有当插入的节点不是根节点且其父节点为红色才需要平衡
     while (x != null && x != root && x.parent.color == RED) {
         if (parentOf(x) == leftOf(parentOf(parentOf(x)))) {
+            //如果父节点是祖父节点的左节点
+            //y为叔叔叔节点
             Entry<K,V> y = rightOf(parentOf(parentOf(x)));
-            if (colorOf(y) == RED) {
+            if (colorOf(y) == RED) {//叔叔节点也是红色时
+                //将父几点设为黑色
                 setColor(parentOf(x), BLACK);
+                //叔叔节点也设为黑色
                 setColor(y, BLACK);
+                //祖父节点设为红色
                 setColor(parentOf(parentOf(x)), RED);
+                //将祖父节点设置为当前节点继续下一次循环
                 x = parentOf(parentOf(x));
             } else {
+                //如果叔叔节点为黑色
+                //如果当前节点是父节点的右节点
                 if (x == rightOf(parentOf(x))) {
+                   // 将父节点设置为当前节点
                     x = parentOf(x);
+                    //以当前节点左旋
                     rotateLeft(x);
                 }
+                //将父节点设为黑色
                 setColor(parentOf(x), BLACK);
+                //将祖父节点设为红色
                 setColor(parentOf(parentOf(x)), RED);
+                //（3）以祖父节点为支点进行右旋
                 rotateRight(parentOf(parentOf(x)));
             }
         } else {
+            //如果父节点是祖父节点的右节点
+            //y是叔叔节点
             Entry<K,V> y = leftOf(parentOf(parentOf(x)));
+       	 
             if (colorOf(y) == RED) {
+                    //情况1）如果叔叔节点为红色         
+				// （1）将父节点设为黑色
                 setColor(parentOf(x), BLACK);
-                setColor(y, BLACK);
+                //将叔叔节点设为黑色
+                setColor(y, BLACK);.
+                    //将祖父节点设置为红色
                 setColor(parentOf(parentOf(x)), RED);
+              // 将祖父节点设为新的当前节点
                 x = parentOf(parentOf(x));
             } else {
+                //如果叔叔节点为黑色
+                //如果当前节点为其父节点的左节点
                 if (x == leftOf(parentOf(x))) {
+                    //将父节点设为当前节点
                     x = parentOf(x);
+                    //以新当前节点右旋
                     rotateRight(x);
                 }
                 setColor(parentOf(x), BLACK);
+                //祖父节点设为红色
                 setColor(parentOf(parentOf(x)), RED);
+                //以祖父节点为支点进行左旋
                 rotateLeft(parentOf(parentOf(x)));
             }
         }
     }
     root.color = BLACK;
 }
+```
+
+### remove(Object key)
+
+删除元素本身比较简单，就是采用二叉树的删除规则。
+
+（1）如果删除的位置有两个叶子节点，则从其右子树中取最小的元素放到删除的位置，然后把删除位置移到替代元素的位置，进入下一步。
+
+（2）如果删除的位置只有一个叶子节点（有可能是经过第一步转换后的删除位置），则把那个叶子节点作为替代元素，放到删除的位置，然后把这个叶子节点删除。
+
+（3）如果删除的位置没有叶子节点，则直接把这个删除位置的元素删除即可。
+
+（4）针对红黑树，如果删除位置是黑色节点，还需要做再平衡。
+
+（5）如果有替代元素，则以替代元素作为当前节点进入再平衡。
+
+（6）如果没有替代元素，则以删除的位置的元素作为当前节点进入再平衡，平衡之后再删除这个节点。
+
+```java
+public V remove(Object key) {
+    //获取要删除的节点
+    Entry<K,V> p = getEntry(key);
+    if (p == null)
+        return null;
+
+    V oldValue = p.value;
+    //删除节点
+    deleteEntry(p);
+    //返回旧值
+    return oldValue;
+}
+
+
+private void deleteEntry(Entry<K,V> p) {
+    //修改次数+1
+        modCount++;
+        size--;//元素个数-1
+        if (p.left != null && p.right != null) {
+            //如果要删除的节点有两个节点
+            Entry<K,V> s = successor(p);
+            p.key = s.key;
+            p.value = s.value;
+            p = s;
+        } // p has 2 children
+
+        // Start fixup at replacement node, if it exists.
+        Entry<K,V> replacement = (p.left != null ? p.left : p.right);
+
+        if (replacement != null) {
+            // Link replacement to parent
+            replacement.parent = p.parent;
+            if (p.parent == null)
+                root = replacement;
+            else if (p == p.parent.left)
+                p.parent.left  = replacement;
+            else
+                p.parent.right = replacement;
+
+            // Null out links so they are OK to use by fixAfterDeletion.
+            p.left = p.right = p.parent = null;
+
+            // Fix replacement
+            if (p.color == BLACK)
+                fixAfterDeletion(replacement);
+        } else if (p.parent == null) { // return if we are the only node.
+            root = null;
+        } else { //  No children. Use self as phantom replacement and unlink.
+            if (p.color == BLACK)
+                fixAfterDeletion(p);
+
+            if (p.parent != null) {
+                if (p == p.parent.left)
+                    p.parent.left = null;
+                else if (p == p.parent.right)
+                    p.parent.right = null;
+                p.parent = null;
+            }
+        }
+    }
 ```
