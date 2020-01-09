@@ -475,17 +475,20 @@ private void deleteEntry(Entry<K,V> p) {
         size--;//元素个数-1
         if (p.left != null && p.right != null) {
             //如果要删除的节点有两个节点
+            //取右子树最小节点
             Entry<K,V> s = successor(p);
+            //用右子树最小节点的值替换当前节点的值
             p.key = s.key;
             p.value = s.value;
             p = s;
         } // p has 2 children
 
         // Start fixup at replacement node, if it exists.
+    //如果当前节点有子节点，则用子节点替换当前节点
         Entry<K,V> replacement = (p.left != null ? p.left : p.right);
 
         if (replacement != null) {
-            // Link replacement to parent
+            // 把替换节点直接放到当前节点的位置上（相当于删除了p，并把替换节点移动过来了）
             replacement.parent = p.parent;
             if (p.parent == null)
                 root = replacement;
@@ -494,18 +497,19 @@ private void deleteEntry(Entry<K,V> p) {
             else
                 p.parent.right = replacement;
 
-            // Null out links so they are OK to use by fixAfterDeletion.
+            // N将p的各项属性都设为空.
             p.left = p.right = p.parent = null;
 
-            // Fix replacement
+            // 如果p是黑节点，则需要再平衡
             if (p.color == BLACK)
                 fixAfterDeletion(replacement);
         } else if (p.parent == null) { // return if we are the only node.
-            root = null;
+            root = null;如果当前节点就是根节点，则直接将根节点设为空即可
         } else { //  No children. Use self as phantom replacement and unlink.
-            if (p.color == BLACK)
+            //如果当前节点没有子节点且其为黑节点，则把自己当作虚拟的替换节点进行再平衡
+            if (p.color == BLACK)//
                 fixAfterDeletion(p);
-
+			//平衡完成后删除当前节点（与父节点断绝关系
             if (p.parent != null) {
                 if (p == p.parent.left)
                     p.parent.left = null;
@@ -515,4 +519,119 @@ private void deleteEntry(Entry<K,V> p) {
             }
         }
     }
+```
+删除再平衡
+
+经过上面的处理，真正删除的肯定是黑色节点才会进入到再平衡阶段。
+
+因为删除的是黑色节点，导致整颗树不平衡了，所以这里我们假设把删除的黑色赋予当前节点，这样当前节点除了它自已的颜色还多了一个黑色，那么：
+
+（1）如果当前节点是根节点，则直接涂黑即可，不需要再平衡；
+
+（2）如果当前节点是红+黑节点，则直接涂黑即可，不需要平衡；
+
+（3）如果当前节点是黑+黑节点，则我们只要通过旋转把这个多出来的黑色不断的向上传递到一个红色节点即可，这又可能会出现以下四种情况：
+
+**（假设当前节点为父节点的左子节点）**
+
+| 情况                                                         | 策略                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1）x是黑+黑节点，x的兄弟是红节点                             | （1）将兄弟节点设为黑色； （2）将父节点设为红色； （3）以父节点为支点进行左旋； （4）重新设置x的兄弟节点，进入下一步； |
+| 2）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的两个子节点都是黑色 | （1）将兄弟节点设置为红色； （2）将x的父节点作为新的当前节点，进入下一次循环； |
+| 3）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的右子节点为黑色，左子节点为红色 | （1）将兄弟节点的左子节点设为黑色； （2）将兄弟节点设为红色； （3）以兄弟节点为支点进行右旋； （4）重新设置x的兄弟节点，进入下一步； |
+| 3）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的右子节点为红色，左子节点任意颜色 | （1）将兄弟节点的颜色设为父节点的颜色； （2）将父节点设为黑色； （3）将兄弟节点的右子节点设为黑色； （4）以父节点为支点进行左旋； （5）将root作为新的当前节点（退出循环）； |
+
+**（假设当前节点为父节点的右子节点，正好反过来）**
+
+| 情况                                                         | 策略                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1）x是黑+黑节点，x的兄弟是红节点                             | （1）将兄弟节点设为黑色； （2）将父节点设为红色； （3）以父节点为支点进行右旋； （4）重新设置x的兄弟节点，进入下一步； |
+| 2）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的两个子节点都是黑色 | （1）将兄弟节点设置为红色； （2）将x的父节点作为新的当前节点，进入下一次循环； |
+| 3）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的左子节点为黑色，右子节点为红色 | （1）将兄弟节点的右子节点设为黑色； （2）将兄弟节点设为红色； （3）以兄弟节点为支点进行左旋； （4）重新设置x的兄弟节点，进入下一步； |
+| 3）x是黑+黑节点，x的兄弟是黑节点，且兄弟节点的左子节点为红色，右子节点任意颜色 | （1）将兄弟节点的颜色设为父节点的颜色； （2）将父节点设为黑色； （3）将兄弟节点的左子节点设为黑色； （4）以父节点为支点进行右旋； （5）将root作为新的当前节点（退出循环）； |
+
+### fixAfterDeletion(Entry<K,V> x)
+
+```java
+private void fixAfterDeletion(Entry<K,V> x) {
+    // 只有当前节点不是根节点且当前节点是黑色时才进入循环
+    while (x != root && colorOf(x) == BLACK) {
+        //当前节点是父节点的左子节点
+        if (x == leftOf(parentOf(x))) {
+            //sib是当前节点的右兄弟节点
+            Entry<K,V> sib = rightOf(parentOf(x));
+			//	如果兄弟节点是红色
+            if (colorOf(sib) == RED) {
+                //染黑兄弟
+                setColor(sib, BLACK);
+                //染红父亲
+                setColor(parentOf(x), RED);
+                //以父节点左旋
+                rotateLeft(parentOf(x));
+                、//重新设置x的兄弟节点，进入下一步
+                sib = rightOf(parentOf(x));
+            }
+
+            if (colorOf(leftOf(sib))  == BLACK &&
+                colorOf(rightOf(sib)) == BLACK) {
+                //如果兄弟节点的两个子节点都是黑色
+                setColor(sib, RED);//兄弟节点设置为红色
+                x = parentOf(x);//将父节点设为当前节点
+            } else {
+                
+                if (colorOf(rightOf(sib)) == BLACK) {
+                    //兄弟节点的右节点是黑色
+                    //兄弟左子节点染黑
+                    setColor(leftOf(sib), BLACK);
+                    //兄弟染红
+                    setColor(sib, RED);
+                    //右旋兄弟
+                    rotateRight(sib);
+                    //重新设置x的兄弟节点
+                    sib = rightOf(parentOf(x));
+                }
+                //将兄弟节点的颜色设为父节点的颜色
+                setColor(sib, colorOf(parentOf(x)));
+                //将父节点设为黑色
+                setColor(parentOf(x), BLACK);
+                //将兄弟节点的右节点染黑
+                setColor(rightOf(sib), BLACK);
+                rotateLeft(parentOf(x));//左旋父亲
+                x = root;//跟节点设置为当前节点
+                
+            }
+        } else { 
+              //当前节点是父节点的y右子节点
+            Entry<K,V> sib = leftOf(parentOf(x));
+
+            if (colorOf(sib) == RED) {
+                setColor(sib, BLACK);
+                setColor(parentOf(x), RED);
+                rotateRight(parentOf(x));
+                sib = leftOf(parentOf(x));
+            }
+
+            if (colorOf(rightOf(sib)) == BLACK &&
+                colorOf(leftOf(sib)) == BLACK) {
+                setColor(sib, RED);
+                x = parentOf(x);
+            } else {
+                if (colorOf(leftOf(sib)) == BLACK) {
+                    setColor(rightOf(sib), BLACK);
+                    setColor(sib, RED);
+                    rotateLeft(sib);
+                    sib = leftOf(parentOf(x));
+                }
+                setColor(sib, colorOf(parentOf(x)));
+                setColor(parentOf(x), BLACK);
+                setColor(leftOf(sib), BLACK);
+                rotateRight(parentOf(x));
+                x = root;
+            }
+        }
+    }
+//退出条件为多出来的黑色向上传递到了根节点或者红节点
+    //则将x设为黑色即可满足红黑树规则
+    setColor(x, BLACK);
+}
 ```
