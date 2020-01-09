@@ -40,6 +40,8 @@
 
 - [TreeMap](./source/java/util/TreeMap.md)
 
+- [HashSet](./source/java/util/HashSet.md)
+
   
 
   
