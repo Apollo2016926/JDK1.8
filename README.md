@@ -44,6 +44,8 @@
 
 - [LinkedHashSet](./source/java/util/LinkedHashSet.md)
 
+- [TreeSet](./source/java/util/TreeSet.md)
+
   
 
   
