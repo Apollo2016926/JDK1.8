@@ -46,6 +46,8 @@
 
 - [TreeSet](./source/java/util/TreeSet.md)
 
+- [PriorityQueue](./source/java/util/PriorityQueue.md)
+
   
 
   
