@@ -48,6 +48,8 @@
 
 - [PriorityQueue](./source/java/util/PriorityQueue.md)
 
+- [ArrayDeque](./source/java/util/ArrayDeque.md)
+
   
 
   
