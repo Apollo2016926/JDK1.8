@@ -50,6 +50,8 @@
 
 - [ArrayDeque](./source/java/util/ArrayDeque.md)
 
+- [LinkedList](./source/java/util/LinkedList.md)
+
   
 
   
