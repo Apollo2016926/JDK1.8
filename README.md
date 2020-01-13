@@ -25,7 +25,7 @@
   + [Semaphore](./source/java/util/concurrent/Semaphore.md)
   + [CountDownLatch ](./source/java/util/concurrent/CountDownLatch.md)
   + [CyclicBarrier](./source/java/util/concurrent/CyclicBarrier.md)
-  + [Phaser](./source/java/util/concurrent/Phaser.md)
+  + [CopyOnWriteArrayList](./source/java/util/concurrent/CopyOnWriteArrayList.md)
 
 
 ​    
