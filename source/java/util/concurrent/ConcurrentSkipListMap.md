@@ -329,5 +329,63 @@ void helpDelete(Node<K,V> b, Node<K,V> f) {
 ```
 ### 删除元素
 
-### 查找元素
+```java
+public V remove(Object key) {
+    return doRemove(key, null);
+}
+final V doRemove(Object key, Object value) {
+        if (key == null)//key不能为空
+            throw new NullPointerException();
+        Comparator<? super K> cmp = comparator;
+        outer: for (;;) {
+            //找目标节点之前的最近的索引节点对应的数据节点,为了方便，这里叫b为当前节点，n为下一个节点，f为孙子节点
+            for (Node<K,V> b = findPredecessor(key, cmp), n = b.next;;) {
+                Object v; int c;
+                if (n == null)
+                    break outer;//整个链表都遍历完了也没找到目标节点，退出外层循环
+                Node<K,V> f = n.next;//孙子节点
+                if (n != b.next)              
+                    //如果n不是b的下一个节点了，
+                    //说明有其它线程先一步修改了，从头来过
+                    break;
+                if ((v = n.value) == null) {        
+                    //如果下个节点的值奕为null了,说明有其它线程标记该元素为删除状态了
+                    //协助删除
+                    n.helpDelete(b, f);
+                    break;
+                }
+                if (b.value == null || v == n)      // b is deleted
+                    //如果b的值为空或者v等于n，说明b已被删除,时候n就是marker节点，那b就是被删除的那个
+                    break;
+                if ((c = cpr(cmp, key, n.key)) < 0)//如果c<0，说明没找到元素，退出外层循环
+                    break outer;
+                if (c > 0) {//如果c>0，说明还没找到，继续向右找
+                    b = n;
+                    n = f;
+                    continue;
+                }
+                //c=0，说明n就是要找的元素
+                //如果value不为空且不等于找到元素的value，不需要删除，退出外层循环
+                if (value != null && !value.equals(v))
+                    break outer;
+                //如果value为空，或者相等,原子标记n的value值为空
+                if (!n.casValue(v, null))
+                    //如果删除失败，说明其它线程先一步修改了，从头来过
+                    break;
+                //一是如果标记market成功，再尝试将b的下个节点指向下下个节点，如果第二步失败了，进入条件，如果成功了就不用进入条件了
+                //是如果标记market失败了，直接进入条件
+                if (!n.appendMarker(f) || !b.casNext(n, f))
+                    findNode(key);                  // 通过findNode()重试删除（里面有个helpDelete()方法）
+                else {
+                    findPredecessor(key, cmp);      // 如果最高层头索引节点没有右节点，则跳表的高度降级
+                    if (head.right == null)
+                        tryReduceLevel();
+                }
+                @SuppressWarnings("unchecked") V vv = (V)v;
+                return vv;
+            }
+        }
+        return null;
+    }
+```
 
