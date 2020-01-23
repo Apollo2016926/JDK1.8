@@ -112,9 +112,87 @@ private void enqueue(E x) {
        
         final Object[] items = this.items;
         items[putIndex] = x;//将元素放在put指针上
-        if (++putIndex == items.length)
+        if (++putIndex == items.length)//如果put指针到数组尽头返回0
             putIndex = 0;
         count++;
-        notEmpty.signal();
+        notEmpty.signal();//唤醒
+    }
+
+
+public void put(E e) throws InterruptedException {
+        checkNotNull(e);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();//枷锁如果线程中断抛出异常
+        try {
+            while (count == items.length)
+                notFull.await();//如果数组满了，使用notFull等待
+            enqueue(e);
+        } finally {
+            lock.unlock();
+        }
     }
 ```
+
+### 出队
+
+```java
+public E poll() {
+    final ReentrantLock lock = this.lock;
+    lock.lock();
+    try {
+        //如果队列没有元素则返回null，否则出队
+        return (count == 0) ? null : dequeue();
+    } finally {
+        lock.unlock();
+    }
+}
+
+public E take() throws InterruptedException {
+    final ReentrantLock lock = this.lock;
+    lock.lockInterruptibly();
+    try {
+        while (count == 0)
+            //如果队列无元素，则阻塞等待在条件notEmpty上
+            notEmpty.await();
+        return dequeue();//有元素了再出队
+    } finally {
+        lock.unlock();
+    }
+}
+
+public E poll(long timeout, TimeUnit unit) throws InterruptedException {
+        long nanos = unit.toNanos(timeout);
+        final ReentrantLock lock = this.lock;
+        lock.lockInterruptibly();
+        try {
+            while (count == 0) {//如果队列无元素，则阻塞等待nanos纳秒
+                if (nanos <= 0)
+                    return null;
+                //如果下一次这个线程获得了锁但队列依然无元素且已超时就返回null
+                nanos = notEmpty.awaitNanos(nanos);
+            }
+            return dequeue();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+private E dequeue() {
+        // assert lock.getHoldCount() == 1;
+        // assert items[takeIndex] != null;
+        final Object[] items = this.items;
+        @SuppressWarnings("unchecked")
+        E x = (E) items[takeIndex];//取取指针位置的元素
+        items[takeIndex] = null;//把取指针位置设为null
+        if (++takeIndex == items.length)//取指针前移，如果数组到头了就返回数组前端循环利用
+            takeIndex = 0;
+        count--;
+        if (itrs != null)
+            itrs.elementDequeued();
+        notFull.signal();//唤醒notFull条件
+        return x;
+    }
+
+ 
+```
+
