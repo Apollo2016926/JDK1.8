@@ -31,6 +31,7 @@
   + [ConcurrentSkipListMap](./source/java/util/concurrent/ConcurrentSkipListMap.md)
   + [ConcurrentSkipListSet](./source/java/util/concurrent/ConcurrentSkipListSet.md)
   + [ArrayBlockingQueue](./source/java/util/concurrent/ArrayBlockingQueue.md)
+  + [LinkedBlockingQueue](./source/java/util/concurrent/LinkedBlockingQueue.md)
 
 
 ​    
