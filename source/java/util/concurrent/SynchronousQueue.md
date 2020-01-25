@@ -132,32 +132,33 @@ E transfer(E e, boolean timed, long nanos) {
    
 
     SNode s = null; // constructed/reused as needed
-    int mode = (e == null) ? REQUEST : DATA;
-
-    for (;;) {
-        SNode h = head;
-        if (h == null || h.mode == mode) {  // empty or same-mode
-            if (timed && nanos <= 0) {      // can't wait
-                if (h != null && h.isCancelled())
-                    casHead(h, h.next);     // pop cancelled node
+    int mode = (e == null) ? REQUEST : DATA;//根据传入的e决定是生产者还是消费者
+    for (;;) {//自旋
+        SNode h = head;//栈顶元素
+        if (h == null || h.mode == mode) {  
+            //栈顶没有元素或栈顶元素和当前元素是同一个模式
+            if (timed && nanos <= 0) {      // 如果有超时而且已到期
+                if (h != null && h.isCancelled())//如果头结点不为空且是取消状态
+                    casHead(h, h.next);     // po弹出头结点
                 else
                     return null;
             } else if (casHead(h, s = snode(s, e, h, mode))) {
-                SNode m = awaitFulfill(s, timed, nanos);
-                if (m == s) {               // wait was cancelled
+                SNode m = awaitFulfill(s, timed, nanos);// 入栈成功（因为是模式相同的，所以只能入栈）调用awaitFulfill()方法自旋+阻塞当前入栈的线程并等待被匹配到
+                if (m == s) {               // 如果m等于s，说明取消了，那么就把它清除掉，并返回null
                     clean(s);
                     return null;
                 }
-                if ((h = head) != null && h.next == s)
+                //如果m等于s，说明取消了，那么就把它清除掉，并返回null就把头节点换成s的下一个节点
+                if ((h = head) != null && h.next == s)//
                     casHead(h, s.next);     // help s's fulfiller
                 return (E) ((mode == REQUEST) ? m.item : s.item);
             }
-        } else if (!isFulfilling(h.mode)) { // try to fulfill
-            if (h.isCancelled())            // already cancelled
+        } else if (!isFulfilling(h.mode)) { //
+            if (h.isCancelled())            //如果头节点已经取消了，就把它弹出栈
                 casHead(h, h.next);         // pop and retry
             else if (casHead(h, s=snode(s, e, h, FULFILLING|mode))) {
                 for (;;) { // loop until matched or waiters disappear
-                    SNode m = s.next;       // m is s's match
+                    SNode m = s.next;       // 如果m等于s，说明取消了，那么就把它清除掉，并返回null
                     if (m == null) {        // all waiters are gone
                         casHead(s, null);   // pop fulfill node
                         s = null;           // use new node next time
