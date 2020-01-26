@@ -33,6 +33,7 @@
   + [ArrayBlockingQueue](./source/java/util/concurrent/ArrayBlockingQueue.md)
   + [LinkedBlockingQueue](./source/java/util/concurrent/LinkedBlockingQueue.md)
   + [SynchronousQueue](./source/java/util/concurrent/SynchronousQueue.md)
+  + [PriorityBlockingQueue ](./source/java/util/concurrent/PriorityBlockingQueue .md)
 
 
 ​    
