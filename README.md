@@ -34,6 +34,7 @@
   + [LinkedBlockingQueue](./source/java/util/concurrent/LinkedBlockingQueue.md)
   + [SynchronousQueue](./source/java/util/concurrent/SynchronousQueue.md)
   + [PriorityBlockingQueue ](./source/java/util/concurrent/PriorityBlockingQueue .md)
+  + [LinkedTransferQueue ](./source/java/util/concurrent/LinkedTransferQueue .md)
 
 
 ​    
